@@ -29,15 +29,31 @@ def predictChurn(iam_token,ml_instance_id,scoring_url,flds,vals):
     response_scoring = requests.post(scoring_url, json=payload_scoring, headers=header)
     churn = json.loads(response_scoring.text)
     return churn
-    
+
 def main(dict):
     apikey = dict['apikey']
     ml_instance_id = dict['ml_instance_id']
-    scoring_url = dict['scoring_url']
-    flds_array = ast.literal_eval(dict['fields'])
-    vals_array = ast.literal_eval(dict['values'])
-    
+    try:
+        scoring_url = dict['scoring_url']
+        flds_array = ast.literal_eval(dict['fields'])
+        vals_array = ast.literal_eval(dict['values'])
+    except:
+        print("error")
+        response = {"error": "not all required parameters are provided. Please make sure you pass the scoring_url, fields, and values parameters"}
+        return response
+        #return {"error": "not all required parameters are provided. Please make sure you pass the scoring_url, fields, and values parameters"}
+        
+   
+    print("scoring url: ", scoring_url)
+    print("calling get token")
+    print('apikey: ', apikey)
     iam_token = getToken(dict['apikey'])
-    churn_prediction = predictChurn(iam_token,ml_instance_id,scoring_url,flds_array,vals_array)
     
-    return churn_prediction
+    churn_prediction = predictChurn(iam_token,ml_instance_id,scoring_url,flds_array,vals_array)
+    #{"predictions":[{"fields":["prediction","probability"],"values":[["F",[0.6,0.4]]]}]}
+    predlabel = churn_prediction['predictions'][0]['values'][0][0]
+    predprob = churn_prediction['predictions'][0]['values'][0][1][0]
+    response = {"label": predlabel, "prob":predprob}
+    
+    #return churn_prediction    
+    return response
